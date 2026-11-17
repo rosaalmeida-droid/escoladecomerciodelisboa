@@ -1,0 +1,8 @@
+{
+  "name": "eventos-ecl",
+  "private": true,
+  "description": "Organização de eventos da escola a partir das conversas de email (Google Apps Script)",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

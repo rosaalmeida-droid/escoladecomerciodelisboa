@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eventos ECL</title>
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface-2: #faf9f6;
+    --ink: #1b2230;
+    --ink-2: #4a5466;
+    --ink-3: #7b8494;
+    --line: #e4e1d8;
+    --accent: #1f4e8c;
+    --accent-soft: #e6eef8;
+    --ok: #1c7a4a;
+    --ok-soft: #e3f3ea;
+    --warn: #a35c00;
+    --warn-soft: #fdf1df;
+    --bad: #b42318;
+    --bad-soft: #fde8e6;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(20, 24, 33, .05), 0 2px 8px rgba(20, 24, 33, .04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  a { color: var(--accent); }
+  h1, h2, h3 { margin: 0; line-height: 1.25; }
+
+  /* ---------- barra de topo */
+  .topo { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .topo-in { max-width: 1180px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; gap: 20px; height: 60px; }
+  .marca { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; cursor: pointer; }
+  .marca-ic { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 15px; }
+  nav { display: flex; gap: 4px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  nav a { padding: 8px 12px; border-radius: 8px; text-decoration: none; color: var(--ink-2); white-space: nowrap; font-weight: 500; }
+  nav a.ativo { background: var(--accent-soft); color: var(--accent); }
+  .sync { font-size: 13px; color: var(--ink-3); white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  /* ---------- elementos comuns */
+  .btn { border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { border-color: #cfcabd; }
+  .btn-pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-pri:hover { background: #193f72; }
+  .btn-peq { padding: 4px 10px; font-size: 13px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .e-planeamento { background: var(--accent-soft); color: var(--accent); }
+  .e-confirmado { background: var(--ok-soft); color: var(--ok); }
+  .e-adiado { background: var(--warn-soft); color: var(--warn); }
+  .e-cancelado { background: #eee; color: #666; }
+  .e-concluido { background: #ece9f7; color: #4b3f8f; }
+  .cartao { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .sec { padding: 20px 22px; }
+  .sec + .sec { border-top: 1px solid var(--line); }
+  .sec-tit { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .sec-tit h2 { font-size: 16px; }
+  .sub { color: var(--ink-3); font-size: 13px; }
+  .vazio { color: var(--ink-3); font-size: 14px; padding: 6px 0; }
+  .pessoa { display: inline-flex; align-items: center; gap: 7px; }
+  .av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; flex: none; }
+  .av-g { width: 40px; height: 40px; font-size: 14px; }
+  .muted { color: var(--ink-3); }
+
+  /* ---------- lista de eventos */
+  .cab-lista { display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .cab-lista h1 { font-size: 26px; letter-spacing: -.02em; }
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .pesq { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 12px; width: 240px; max-width: 100%; }
+  .filtro { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; cursor: pointer; font-size: 13.5px; }
+  .filtro.ativo { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .grelha { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+  .ev-card { padding: 18px; cursor: pointer; display: flex; flex-direction: column; gap: 12px; transition: border-color .15s, transform .15s; }
+  .ev-card:hover { border-color: #c9c3b4; transform: translateY(-1px); }
+  .ev-topo { display: flex; gap: 14px; align-items: flex-start; }
+  .dia { flex: none; width: 52px; text-align: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface-2); }
+  .dia b { display: block; font-size: 20px; line-height: 1; padding: 7px 0 3px; }
+  .dia span { display: block; font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--ink-3); padding-bottom: 6px; letter-spacing: .04em; }
+  .dia.sem b { font-size: 15px; padding: 10px 0 12px; color: var(--ink-3); }
+  .ev-card h3 { font-size: 17px; letter-spacing: -.01em; }
+  .ev-ponto { color: var(--ink-2); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
+  .barra { height: 6px; background: #ece9e1; border-radius: 99px; overflow: hidden; }
+  .barra i { display: block; height: 100%; background: var(--ok); border-radius: 99px; }
+  .ev-rodape { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-3); flex-wrap: wrap; }
+  .sinais { display: flex; gap: 10px; }
+  .sinal-mau { color: var(--bad); font-weight: 600; }
+  .sinal-aviso { color: var(--warn); font-weight: 600; }
+
+  /* ---------- detalhe */
+  .voltar { display: inline-flex; gap: 6px; align-items: center; text-decoration: none; color: var(--ink-2); font-weight: 500; margin-bottom: 14px; }
+  .det-cab { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 20px; }
+  .det-cab h1 { font-size: 28px; letter-spacing: -.02em; margin: 6px 0 8px; }
+  .meta { display: flex; gap: 18px; flex-wrap: wrap; color: var(--ink-2); font-size: 14px; }
+  .meta span { display: inline-flex; gap: 6px; align-items: center; }
+  .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .situacao { padding: 20px 22px; margin-bottom: 20px; background: linear-gradient(180deg, #fff, #fbfaf6); }
+  .situacao .rot { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
+  .situacao p { margin: 0; font-size: 16px; line-height: 1.6; max-width: 85ch; }
+  .alertas { margin-top: 14px; display: grid; gap: 8px; }
+  .alerta { background: var(--warn-soft); color: #6d3d00; padding: 9px 12px; border-radius: 8px; font-size: 14px; display: flex; gap: 8px; }
+  .det-grelha { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .col { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+
+  /* organograma */
+  .org { display: flex; flex-direction: column; align-items: center; }
+  .no { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 200px; }
+  .no-raiz { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); display: flex; gap: 12px; align-items: center; }
+  .no-papel { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; color: var(--ink-3); }
+  .no-nome { font-weight: 600; }
+  .no-raiz .no-papel { color: var(--accent); }
+  .ligacao { width: 2px; height: 22px; background: var(--line); }
+  .ramos { display: flex; gap: 14px; position: relative; padding-top: 22px; width: 100%; justify-content: center; flex-wrap: wrap; }
+  .ramos::before { content: ""; position: absolute; top: 0; left: var(--l, 10%); right: var(--r, 10%); height: 2px; background: var(--line); }
+  .ramo { position: relative; flex: 1 1 190px; max-width: 260px; }
+  .ramo::before { content: ""; position: absolute; top: -22px; left: 50%; width: 2px; height: 22px; background: var(--line); }
+  .ramo .no { min-width: 0; height: 100%; }
+  .area-nome { font-weight: 700; font-size: 14.5px; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 6px; }
+  .area-lider { display: flex; gap: 8px; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px dashed var(--line); font-size: 14px; }
+  .membros { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: var(--ink-2); }
+  .outros { margin-top: 16px; font-size: 13.5px; color: var(--ink-2); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .etiqueta { display: inline-flex; align-items: center; gap: 6px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px 2px 3px; }
+
+  /* tarefas */
+  .tarefas { display: flex; flex-direction: column; }
+  .tarefa { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); }
+  .tarefa:first-child { border-top: 0; }
+  .visto { width: 20px; height: 20px; border-radius: 6px; border: 2px solid #c7c2b5; background: var(--surface); cursor: pointer; margin-top: 2px; display: grid; place-items: center; padding: 0; }
+  .visto:hover { border-color: var(--ok); }
+  .tarefa.feita .visto { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .tarefa.feita .t-desc { color: var(--ink-3); text-decoration: line-through; }
+  .t-desc { font-weight: 500; }
+  .t-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--ink-3); margin-top: 4px; align-items: center; }
+  .t-meta .num { font-variant-numeric: tabular-nums; }
+  .atrasada { color: var(--bad); font-weight: 600; }
+  .proxima { color: var(--warn); font-weight: 600; }
+  .sem-resp { color: var(--warn); font-weight: 600; }
+  .resp-sel { border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 1px 4px; cursor: pointer; color: var(--ink-2); max-width: 200px; }
+  .resp-sel:hover { border-color: var(--line); background: var(--surface-2); }
+  .grupo-area { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; color: var(--ink-3); margin: 14px 0 2px; }
+  .grupo-area:first-child { margin-top: 0; }
+  details summary { cursor: pointer; color: var(--ink-2); font-weight: 500; font-size: 14px; }
+
+  /* perguntar */
+  .perg { display: flex; gap: 8px; }
+  .perg input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface-2); }
+  .resposta { margin-top: 12px; background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; font-size: 14.5px; white-space: pre-wrap; }
+  .sugestoes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .sugestoes button { border: 1px dashed #cfc9ba; background: transparent; border-radius: 999px; padding: 3px 10px; font-size: 12.5px; cursor: pointer; color: var(--ink-2); }
+
+  /* listas simples */
+  .lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .lista li { display: flex; gap: 10px; font-size: 14.5px; }
+  .lista .ic { flex: none; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 12px; margin-top: 1px; }
+  .ic-ok { background: var(--ok-soft); color: var(--ok); }
+  .ic-q { background: var(--warn-soft); color: var(--warn); }
+
+  /* histórico */
+  .hist { display: grid; gap: 0; position: relative; }
+  .h-item { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 10px 0; position: relative; }
+  .h-item::before { content: ""; position: absolute; left: 12px; top: 38px; bottom: -10px; width: 2px; background: var(--line); }
+  .h-item:last-child::before { display: none; }
+  .h-quem { font-size: 13px; color: var(--ink-3); }
+  .h-quem b { color: var(--ink); font-weight: 600; }
+  .h-resumo { font-size: 14.5px; margin-top: 2px; }
+  .h-exc { font-size: 13px; color: var(--ink-2); background: var(--surface-2); border-left: 3px solid var(--line); padding: 6px 10px; margin-top: 6px; border-radius: 0 6px 6px 0; }
+
+  /* as minhas tarefas */
+  .minhas { display: grid; gap: 16px; }
+  .papeis { display: flex; gap: 6px; flex-wrap: wrap; }
+  .papel { font-size: 12px; background: var(--accent-soft); color: var(--accent); border-radius: 6px; padding: 2px 8px; font-weight: 600; }
+
+  /* como funciona */
+  .passos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0 28px; }
+  .passo { padding: 20px; }
+  .passo .n { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; margin-bottom: 10px; }
+  .passo h3 { font-size: 16px; margin-bottom: 6px; }
+  .passo p { margin: 0; color: var(--ink-2); font-size: 14.5px; }
+  .exemplo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .email { font-size: 14px; }
+  .email-cab { padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink-2); display: grid; gap: 2px; }
+  .email-corpo { padding: 14px 16px; white-space: pre-wrap; }
+  .seta-ia { padding: 14px 16px; font-size: 14px; }
+  .seta-ia ul { margin: 6px 0 0; padding-left: 18px; color: var(--ink-2); }
+  .seta-ia li { margin: 3px 0; }
+
+  .aviso-demo { background: #fff8e1; border: 1px solid #f2dfa4; color: #6b5200; border-radius: 10px; padding: 10px 14px; font-size: 14px; margin-bottom: 20px; }
+  .carregar { text-align: center; padding: 80px 0; color: var(--ink-3); }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.2); z-index: 20; }
+
+  @media (max-width: 900px) {
+    .det-grelha { grid-template-columns: minmax(0, 1fr); }
+    .passos, .exemplo { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .topo-in { padding: 0 16px; gap: 10px; }
+    .marca span.txt { display: none; }
+    .sync .quando { display: none; }
+    nav a { padding: 8px 9px; }
+    main { padding: 20px 16px 60px; }
+    .grelha { grid-template-columns: 1fr; }
+    .pesq { width: 100%; }
+    .det-cab h1 { font-size: 23px; }
+    .sec { padding: 16px; }
+    .ramos { flex-direction: column; padding-top: 0; align-items: stretch; }
+    .ramos::before { display: none; }
+    .ramo { max-width: none; flex: none; margin-top: 12px; padding-left: 14px; border-left: 2px solid var(--line); }
+    .ramo::before { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <div class="marca" onclick="ir('')"><div class="marca-ic">✦</div><span class="txt" id="nomeApp">Eventos ECL</span></div>
+    <nav>
+      <a href="#" data-v="">Eventos</a>
+      <a href="#minhas" data-v="minhas">As minhas tarefas</a>
+      <a href="#como" data-v="como">Como funciona</a>
+    </nav>
+    <div class="sync" id="sync"></div>
+  </div>
+</header>
+<main id="app"><div class="carregar">A carregar os eventos…</div></main>
+
+<script>
+// =====================================================================
+// Ligação ao servidor (Apps Script) — ou dados de demonstração
+// =====================================================================
+var DEMO = typeof google === 'undefined' || !google.script;
+var D = null;               // dados vindos do servidor
+var filtroEstado = 'ativos';
+var textoPesquisa = '';
+
+function servidor(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function (ok, erro) {
+    if (DEMO) return ok(Demo[fn].apply(null, args));
+    var r = google.script.run.withSuccessHandler(ok).withFailureHandler(erro);
+    r[fn].apply(r, args);
+  });
+}
+
+// =====================================================================
+// Utilitários
+// =====================================================================
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+var MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+var DIAS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+function hojeIso() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function dataLonga(iso) {
+  if (!iso) return 'Data por definir';
+  var p = iso.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]);
+  return DIAS[d.getDay()] + ', ' + (+p[2]) + ' ' + MESES[+p[1] - 1] + ' ' + p[0];
+}
+function dataCurta(iso) { if (!iso) return ''; var p = iso.slice(0, 10).split('-'); return (+p[2]) + ' ' + MESES[+p[1] - 1]; }
+function diasAte(iso) {
+  var p = iso.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]), h = new Date(); h.setHours(0, 0, 0, 0);
+  return Math.round((d - h) / 86400000);
+}
+function quando(isoTs) {
+  if (!isoTs) return '';
+  var d = new Date(isoTs), s = (Date.now() - d) / 1000;
+  if (s < 90) return 'agora mesmo';
+  if (s < 3600) return 'há ' + Math.round(s / 60) + ' min';
+  if (s < 86400) return 'há ' + Math.round(s / 3600) + ' h';
+  return d.getDate() + ' ' + MESES[d.getMonth()] + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+var CORES = ['#1f4e8c', '#1c7a4a', '#8a3ffc', '#b4441b', '#0e7490', '#a21caf', '#4d7c0f', '#9f1239', '#5b21b6', '#92400e'];
+function avatar(p, grande) {
+  if (!p) return '<span class="av' + (grande ? ' av-g' : '') + '" style="background:#c7c2b5">?</span>';
+  var ini = p.nome.replace(/^(prof|profa|prof\.ª|dr|dra|eng)\.?\s+/i, '').split(/\s+/).filter(Boolean);
+  ini = (ini[0] || '?')[0] + (ini.length > 1 ? ini[ini.length - 1][0] : '');
+  var h = 0, k = p.email || p.nome;
+  for (var i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+  return '<span class="av' + (grande ? ' av-g' : '') + '" style="background:' + CORES[h % CORES.length] + '" title="' + esc(p.email || p.nome) + '">' + esc(ini.toUpperCase()) + '</span>';
+}
+function pessoaHtml(p) {
+  if (!p) return '<span class="pessoa muted">' + avatar(null) + 'Por atribuir</span>';
+  return '<span class="pessoa">' + avatar(p) + '<span>' + esc(p.nome) + '</span></span>';
+}
+var NOMES_ESTADO = { planeamento: 'Em planeamento', confirmado: 'Confirmado', adiado: 'Adiado', cancelado: 'Cancelado', concluido: 'Realizado' };
+function chipEstado(e) { return '<span class="chip e-' + e + '">' + (NOMES_ESTADO[e] || e) + '</span>'; }
+function igual(a, b) { return a && b && (a.email && b.email ? a.email === b.email : a.nome === b.nome); }
+function toast(t) {
+  var el = document.createElement('div'); el.className = 'toast'; el.textContent = t;
+  document.body.appendChild(el); setTimeout(function () { el.remove(); }, 2600);
+}
+function evento(id) { return D.eventos.filter(function (e) { return e.id === id; })[0]; }
+function prazoHtml(t) {
+  if (!t.prazo) return '';
+  if (t.estado !== 'pendente') return '<span class="num">até ' + dataCurta(t.prazo) + '</span>';
+  var d = diasAte(t.prazo);
+  if (d < 0) return '<span class="num atrasada">⚑ atrasada ' + (-d) + ' dia' + (d === -1 ? '' : 's') + '</span>';
+  if (d <= 3) return '<span class="num proxima">' + (d === 0 ? 'até hoje' : d === 1 ? 'até amanhã' : 'em ' + d + ' dias') + '</span>';
+  return '<span class="num">até ' + dataCurta(t.prazo) + '</span>';
+}
+function contagens(ev) {
+  var hoje = hojeIso(), c = { total: 0, feitas: 0, atrasadas: 0, semResp: 0 };
+  ev.tarefas.forEach(function (t) {
+    if (t.estado === 'cancelada') return;
+    c.total++;
+    if (t.estado === 'concluida') c.feitas++;
+    else { if (t.prazo && t.prazo < hoje) c.atrasadas++; if (!t.responsavel) c.semResp++; }
+  });
+  return c;
+}
+
+// =====================================================================
+// Navegação
+// =====================================================================
+function ir(h) { location.hash = h; }
+function rota() { return decodeURIComponent(location.hash.replace(/^#/, '')); }
+window.addEventListener('hashchange', desenhar);
+if (!DEMO) {
+  google.script.url.getLocation(function (loc) { if (loc.hash) location.hash = loc.hash; });
+}
+
+function desenhar() {
+  if (!D) return;
+  var r = rota();
+  document.querySelectorAll('nav a').forEach(function (a) {
+    var v = a.getAttribute('data-v');
+    a.classList.toggle('ativo', !!(v === r || (v === '' && evento(r))));
+  });
+  var app = document.getElementById('app');
+  var aviso = DEMO ? '<div class="aviso-demo"><b>Modo de demonstração.</b> Dados fictícios. Quando instalada no Google, a app mostra os eventos reais lidos do email.</div>' : '';
+  if (r === 'minhas') app.innerHTML = aviso + vistaMinhas();
+  else if (r === 'como') app.innerHTML = aviso + vistaComo();
+  else if (evento(r)) app.innerHTML = aviso + vistaEvento(evento(r));
+  else app.innerHTML = aviso + vistaLista();
+  window.scrollTo(0, 0);
+}
+
+function desenharSync() {
+  var el = document.getElementById('sync');
+  el.innerHTML = '<span class="quando">Email lido ' + esc(quando(D.ultimaSync) || '—') + '</span>' +
+    (D.admin ? '<button class="btn btn-peq" onclick="sincronizar(this)">Ler agora</button>' : '');
+}
+
+function sincronizar(b) {
+  b.disabled = true; b.textContent = 'A ler…';
+  servidor('api_sincronizar').then(function (j) { D = JSON.parse(j); desenharSync(); desenhar(); toast('Email lido.'); })
+    .catch(function (e) { toast(e.message || 'Erro'); b.disabled = false; b.textContent = 'Ler agora'; });
+}
+
+// =====================================================================
+// Vista: lista de eventos
+// =====================================================================
+function vistaLista() {
+  var q = textoPesquisa.toLowerCase();
+  var lista = D.eventos.filter(function (e) {
+    var ativo = e.estado !== 'cancelado' && e.estado !== 'concluido';
+    if (filtroEstado === 'ativos' && !ativo) return false;
+    if (filtroEstado === 'arquivo' && ativo) return false;
+    if (q && (e.nome + ' ' + e.local + ' ' + e.pontoSituacao).toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  }).sort(function (a, b) { return (a.data || '9999') < (b.data || '9999') ? -1 : 1; });
+
+  var f = function (v, t) { return '<button class="filtro' + (filtroEstado === v ? ' ativo' : '') + '" onclick="filtroEstado=\'' + v + '\';desenhar()">' + t + '</button>'; };
+  var h = '<div class="cab-lista"><div><h1>Eventos e projetos</h1><div class="sub">' +
+    D.eventos.length + ' registados · organizados a partir das conversas de email</div></div>' +
+    '<div class="filtros">' + f('ativos', 'A decorrer') + f('arquivo', 'Arquivo') + f('todos', 'Todos') +
+    '<input class="pesq" placeholder="Procurar…" value="' + esc(textoPesquisa) + '" oninput="textoPesquisa=this.value;atualizarLista()"></div></div>';
+  h += '<div class="grelha" id="grelha">' + cartoes(lista) + '</div>';
+  return h;
+}
+function atualizarLista() {
+  var app = document.getElementById('app');
+  var pos = document.activeElement && document.activeElement.selectionStart;
+  app.innerHTML = (DEMO ? app.querySelector('.aviso-demo').outerHTML : '') + vistaLista();
+  var i = app.querySelector('.pesq'); i.focus(); if (pos != null) i.setSelectionRange(pos, pos);
+}
+function cartoes(lista) {
+  if (!lista.length) return '<div class="vazio">Nenhum evento aqui. Os eventos aparecem sozinhos quando alguém escreve sobre eles com a caixa de eventos em cópia.</div>';
+  return lista.map(function (ev) {
+    var c = contagens(ev);
+    var pct = c.total ? Math.round(100 * c.feitas / c.total) : 0;
+    var dia = ev.data ? '<div class="dia"><b>' + (+ev.data.slice(8, 10)) + '</b><span>' + MESES[+ev.data.slice(5, 7) - 1] + '</span></div>' : '<div class="dia sem"><b>?</b></div>';
+    var sinais = [];
+    if (c.atrasadas) sinais.push('<span class="sinal-mau">' + c.atrasadas + ' atrasada' + (c.atrasadas > 1 ? 's' : '') + '</span>');
+    if (c.semResp) sinais.push('<span class="sinal-aviso">' + c.semResp + ' sem responsável</span>');
+    if (ev.questoes.length) sinais.push('<span>' + ev.questoes.length + ' dúvida' + (ev.questoes.length > 1 ? 's' : '') + '</span>');
+    return '<article class="cartao ev-card" onclick="ir(\'' + esc(ev.id) + '\')">' +
+      '<div class="ev-topo">' + dia + '<div style="flex:1;min-width:0"><div style="display:flex;gap:8px;align-items:center;justify-content:space-between">' +
+      '<h3>' + esc(ev.nome) + '</h3>' + chipEstado(ev.estado) + '</div>' +
+      '<div class="sub">' + esc([ev.hora, ev.local].filter(Boolean).join(' · ') || 'Local por definir') + '</div></div></div>' +
+      (ev.pontoSituacao ? '<p class="ev-ponto">' + esc(ev.pontoSituacao) + '</p>' : '') +
+      '<div><div class="barra"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="ev-rodape" style="margin-top:8px"><span>' + c.feitas + ' de ' + c.total + ' tarefas feitas</span><span class="sinais">' + sinais.join('') + '</span></div></div>' +
+      '<div class="ev-rodape">' + (ev.coordenador ? pessoaHtml(ev.coordenador) : '<span class="sinal-aviso">Sem responsável geral</span>') +
+      '<span>atualizado ' + esc(quando(ev.atualizadoEm)) + '</span></div>' +
+      '</article>';
+  }).join('');
+}
+
+// =====================================================================
+// Vista: um evento
+// =====================================================================
+function vistaEvento(ev) {
+  var mailto = 'mailto:' + encodeURIComponent(ev.coordenador && ev.coordenador.email ? ev.coordenador.email : '') +
+    '?cc=' + encodeURIComponent(D.caixa) + '&subject=' + encodeURIComponent('[EVENTO] ' + ev.nome);
+  var h = '<a class="voltar" href="#">← Todos os eventos</a>';
+  h += '<div class="det-cab"><div>' + chipEstado(ev.estado) + '<h1>' + esc(ev.nome) + '</h1>' +
+    '<div class="meta"><span>📅 ' + esc(dataLonga(ev.data)) + (ev.hora ? ' às ' + esc(ev.hora) : '') + '</span>' +
+    '<span>📍 ' + esc(ev.local || 'Local por definir') + '</span>' +
+    '<span>✉️ ' + ev.historico.filter(function (x) { return !x.app; }).length + ' mensagens</span></div>' +
+    (ev.descricao ? '<p style="margin:12px 0 0;color:var(--ink-2);max-width:75ch">' + esc(ev.descricao) + '</p>' : '') + '</div>' +
+    '<div class="acoes"><a class="btn btn-pri" href="' + mailto + '" target="_blank">✉️ Escrever sobre este evento</a></div></div>';
+
+  h += '<section class="cartao situacao"><div class="rot">✦ Ponto de situação</div><p>' +
+    esc(ev.pontoSituacao || 'Ainda não há informação suficiente para um resumo.') + '</p>' +
+    (ev.alertas.length ? '<div class="alertas">' + ev.alertas.map(function (a) { return '<div class="alerta">⚠️ <span>' + esc(a) + '</span></div>'; }).join('') + '</div>' : '') +
+    '</section>';
+
+  h += '<div class="det-grelha"><div class="col">';
+  h += '<section class="cartao"><div class="sec"><div class="sec-tit"><h2>Quem faz o quê</h2><span class="sub">organograma do evento</span></div>' + organograma(ev) + '</div></section>';
+  h += '<section class="cartao"><div class="sec">' + tarefasHtml(ev) + '</div></section>';
+  h += '</div><div class="col">';
+  h += '<section class="cartao"><div class="sec"><div class="sec-tit"><h2>Perguntar sobre o evento</h2></div>' +
+    '<form class="perg" onsubmit="perguntar(event,\'' + esc(ev.id) + '\')"><input id="pergunta" placeholder="Ex.: quem trata do som?" autocomplete="off"><button class="btn btn-pri">Perguntar</button></form>' +
+    '<div class="sugestoes">' + ['O que falta fazer?', 'Quem trata da comunicação?', 'O que ficou decidido?'].map(function (s) {
+      return '<button type="button" onclick="document.getElementById(\'pergunta\').value=this.textContent;perguntar(null,\'' + esc(ev.id) + '\')">' + s + '</button>';
+    }).join('') + '</div><div id="resposta"></div></div></section>';
+  h += '<section class="cartao"><div class="sec"><div class="sec-tit"><h2>Decisões tomadas</h2><span class="sub">' + ev.decisoes.length + '</span></div>' +
+    (ev.decisoes.length ? '<ul class="lista">' + ev.decisoes.map(function (d) {
+      return '<li><span class="ic ic-ok">✓</span><span>' + esc(d.texto) + '<br><span class="sub">' + esc(dataCurta(d.data)) + (d.de ? ' · ' + esc(d.de.nome) : '') + '</span></span></li>';
+    }).join('') + '</ul>' : '<div class="vazio">Nada decidido ainda.</div>') + '</div>' +
+    '<div class="sec"><div class="sec-tit"><h2>Por resolver</h2><span class="sub">' + ev.questoes.length + '</span></div>' +
+    (ev.questoes.length ? '<ul class="lista">' + ev.questoes.map(function (q) {
+      return '<li><span class="ic ic-q">?</span><span>' + esc(q.texto) + (q.quem ? '<br><span class="sub">cabe a ' + esc(q.quem.nome) + '</span>' : '') + '</span></li>';
+    }).join('') + '</ul>' : '<div class="vazio">Sem dúvidas pendentes.</div>') + '</div></section>';
+  h += '<section class="cartao"><div class="sec"><div class="sec-tit"><h2>Conversa</h2><span class="sub">o que cada mensagem trouxe</span></div>' + historicoHtml(ev) + '</div></section>';
+  h += '</div></div>';
+  return h;
+}
+
+function organograma(ev) {
+  var tarefasDe = function (p) {
+    if (!p) return 0;
+    return ev.tarefas.filter(function (t) { return t.estado === 'pendente' && igual(t.responsavel, p); }).length;
+  };
+  var nt = function (p) { var n = tarefasDe(p); return n ? ' <span class="sub">· ' + n + ' tarefa' + (n > 1 ? 's' : '') + '</span>' : ''; };
+  var h = '<div class="org"><div class="no no-raiz">' + avatar(ev.coordenador, true) + '<div><div class="no-papel">Responsável geral</div>' +
+    '<div class="no-nome">' + (ev.coordenador ? esc(ev.coordenador.nome) + nt(ev.coordenador) : '<span class="sinal-aviso">Por definir</span>') + '</div></div></div>';
+  if (ev.areas.length) {
+    var n = ev.areas.length, margem = n > 1 ? (50 / n) + '%' : '50%';
+    h += '<div class="ligacao"></div><div class="ramos" style="--l:' + margem + ';--r:' + margem + '">' + ev.areas.map(function (a) {
+      var pend = ev.tarefas.filter(function (t) { return t.area === a.nome && t.estado === 'pendente'; }).length;
+      return '<div class="ramo"><div class="no"><div class="area-nome"><span>' + esc(a.nome) + '</span>' +
+        (pend ? '<span class="sub">' + pend + ' por fazer</span>' : '') + '</div>' +
+        '<div class="area-lider">' + avatar(a.responsavel) + '<div><div class="no-papel" style="font-size:10px">Responsável</div>' +
+        (a.responsavel ? esc(a.responsavel.nome) + nt(a.responsavel) : '<span class="sinal-aviso">Por definir</span>') + '</div></div>' +
+        '<div class="membros">' + (a.membros.length ? a.membros.map(function (m) { return '<span class="pessoa">' + avatar(m) + '<span>' + esc(m.nome) + nt(m) + '</span></span>'; }).join('') : '<span class="muted">Sem equipa ainda</span>') +
+        '</div></div></div>';
+    }).join('') + '</div>';
+  }
+  h += '</div>';
+  var comPapel = [ev.coordenador];
+  ev.areas.forEach(function (a) { comPapel.push(a.responsavel); comPapel = comPapel.concat(a.membros); });
+  var outros = ev.pessoas.filter(function (p) { return !comPapel.some(function (x) { return igual(x, p); }); });
+  if (outros.length) {
+    h += '<div class="outros"><span class="sub">Também nas conversas:</span>' + outros.map(function (p) {
+      return '<span class="etiqueta">' + avatar(p) + esc(p.nome) + '</span>';
+    }).join('') + '</div>';
+  }
+  return h;
+}
+
+function tarefasHtml(ev) {
+  var c = contagens(ev);
+  var pend = ev.tarefas.filter(function (t) { return t.estado === 'pendente'; });
+  var feitas = ev.tarefas.filter(function (t) { return t.estado === 'concluida'; });
+  var h = '<div class="sec-tit"><h2>Tarefas</h2><span class="sub">' + c.feitas + ' de ' + c.total + ' feitas</span></div>';
+  if (!ev.tarefas.length) return h + '<div class="vazio">Ainda não surgiram tarefas nas conversas.</div>';
+  pend.sort(function (a, b) { return (a.prazo || '9999') < (b.prazo || '9999') ? -1 : 1; });
+  var grupos = {}, ordem = [];
+  pend.forEach(function (t) { var k = t.area || 'Geral'; if (!grupos[k]) { grupos[k] = []; ordem.push(k); } grupos[k].push(t); });
+  ordem.sort(function (a, b) { return a === 'Geral' ? 1 : b === 'Geral' ? -1 : 0; });
+  h += '<div class="tarefas">';
+  if (!pend.length) h += '<div class="vazio">Tudo feito! 🎉</div>';
+  ordem.forEach(function (k) {
+    if (ordem.length > 1) h += '<div class="grupo-area">' + esc(k) + '</div>';
+    h += grupos[k].map(function (t) { return tarefaHtml(ev, t); }).join('');
+  });
+  h += '</div>';
+  if (feitas.length) h += '<details style="margin-top:12px"><summary>Ver ' + feitas.length + ' tarefa' + (feitas.length > 1 ? 's' : '') + ' feita' + (feitas.length > 1 ? 's' : '') + '</summary><div class="tarefas" style="margin-top:6px">' +
+    feitas.map(function (t) { return tarefaHtml(ev, t); }).join('') + '</div></details>';
+  return h;
+}
+
+function tarefaHtml(ev, t, mostrarEvento) {
+  var feita = t.estado === 'concluida';
+  var opcoes = '<option value="">Por atribuir</option>' + ev.pessoas.map(function (p, i) {
+    return '<option value="' + i + '"' + (igual(p, t.responsavel) ? ' selected' : '') + '>' + esc(p.nome) + '</option>';
+  }).join('');
+  return '<div class="tarefa' + (feita ? ' feita' : '') + '">' +
+    '<button class="visto" title="' + (feita ? 'Reabrir' : 'Marcar como feita') + '" onclick="alternar(\'' + esc(ev.id) + '\',' + t.id + ',' + !feita + ')">' + (feita ? '✓' : '') + '</button>' +
+    '<div><div class="t-desc">' + esc(t.descricao) + '</div><div class="t-meta">' +
+    (mostrarEvento ? '<a href="#' + esc(ev.id) + '">' + esc(ev.nome) + '</a>' : '') +
+    '<span class="pessoa">' + avatar(t.responsavel) + '<select class="resp-sel' + (t.responsavel ? '' : ' sem-resp') + '" onchange="reatribuir(\'' + esc(ev.id) + '\',' + t.id + ',this.value)" title="Mudar responsável">' + opcoes + '</select></span>' +
+    (t.area && !mostrarEvento ? '<span>' + esc(t.area) + '</span>' : '') +
+    prazoHtml(t) + '<span class="muted">#' + t.id + '</span></div></div></div>';
+}
+
+function historicoHtml(ev) {
+  if (!ev.historico.length) return '<div class="vazio">Sem mensagens.</div>';
+  var itens = ev.historico.slice().reverse();
+  var mostrar = function (lista) {
+    return lista.map(function (x) {
+      return '<div class="h-item">' + avatar(x.de) + '<div><div class="h-quem"><b>' + esc(x.de ? x.de.nome : '?') + '</b> · ' + esc(quando(x.data)) + (x.app ? ' · na app' : '') + '</div>' +
+        (x.resumo ? '<div class="h-resumo">' + esc(x.resumo) + '</div>' : '') +
+        (x.excerto ? '<details><summary style="font-size:12.5px;color:var(--ink-3);margin-top:4px">ver mensagem</summary><div class="h-exc">' + esc(x.excerto) + '</div></details>' : '') +
+        '</div></div>';
+    }).join('');
+  };
+  var h = '<div class="hist">' + mostrar(itens.slice(0, 8)) + '</div>';
+  if (itens.length > 8) h += '<details><summary>Mensagens anteriores (' + (itens.length - 8) + ')</summary><div class="hist">' + mostrar(itens.slice(8)) + '</div></details>';
+  return h;
+}
+
+// --- ações
+function substituir(evNovo) {
+  var e = JSON.parse(evNovo);
+  D.eventos = D.eventos.map(function (x) { return x.id === e.id ? e : x; });
+  desenhar();
+}
+function alternar(evId, tId, concluir) {
+  servidor('api_tarefa', evId, tId, { estado: concluir ? 'concluida' : 'pendente' })
+    .then(function (j) { var y = window.scrollY; substituir(j); window.scrollTo(0, y); toast(concluir ? 'Tarefa marcada como feita.' : 'Tarefa reaberta.'); })
+    .catch(function (e) { toast(e.message || 'Erro'); });
+}
+function reatribuir(evId, tId, idx) {
+  var ev = evento(evId), p = idx === '' ? { nome: '', email: '' } : ev.pessoas[+idx];
+  servidor('api_tarefa', evId, tId, { responsavel: p.nome || p.email ? p : null })
+    .then(function (j) { var y = window.scrollY; substituir(j); window.scrollTo(0, y); toast('Responsável atualizado.'); })
+    .catch(function (e) { toast(e.message || 'Erro'); });
+}
+function perguntar(e, evId) {
+  if (e) e.preventDefault();
+  var q = document.getElementById('pergunta').value.trim();
+  if (!q) return;
+  var r = document.getElementById('resposta');
+  r.innerHTML = '<div class="resposta muted">A pensar…</div>';
+  servidor('api_perguntar', evId, q).then(function (txt) { r.innerHTML = '<div class="resposta">' + esc(txt) + '</div>'; })
+    .catch(function (err) { r.innerHTML = '<div class="resposta" style="background:var(--bad-soft)">' + esc(err.message || 'Erro') + '</div>'; });
+}
+
+// =====================================================================
+// Vista: as minhas tarefas
+// =====================================================================
+function vistaMinhas() {
+  var eu = D.eu;
+  var h = '<div class="cab-lista"><div><h1>As minhas tarefas</h1><div class="sub">' + esc(eu || 'Sessão sem email identificado') + '</div></div></div>';
+  var blocos = D.eventos.map(function (ev) {
+    var minhas = ev.tarefas.filter(function (t) { return t.estado === 'pendente' && t.responsavel && t.responsavel.email === eu; })
+      .sort(function (a, b) { return (a.prazo || '9999') < (b.prazo || '9999') ? -1 : 1; });
+    var papeis = [];
+    if (ev.coordenador && ev.coordenador.email === eu) papeis.push('Responsável geral');
+    ev.areas.forEach(function (a) {
+      if (a.responsavel && a.responsavel.email === eu) papeis.push('Responsável de ' + a.nome);
+      else if (a.membros.some(function (m) { return m.email === eu; })) papeis.push('Equipa de ' + a.nome);
+    });
+    if (!minhas.length && !papeis.length) return '';
+    return '<section class="cartao"><div class="sec"><div class="sec-tit"><div><h2><a href="#' + esc(ev.id) + '" style="color:inherit">' + esc(ev.nome) + '</a></h2>' +
+      '<div class="sub">' + esc(dataLonga(ev.data)) + '</div></div><div class="papeis">' + papeis.map(function (p) { return '<span class="papel">' + esc(p) + '</span>'; }).join('') + '</div></div>' +
+      (minhas.length ? '<div class="tarefas">' + minhas.map(function (t) { return tarefaHtml(ev, t); }).join('') + '</div>' : '<div class="vazio">Sem tarefas pendentes neste evento.</div>') +
+      '</div></section>';
+  }).filter(Boolean);
+  return h + (blocos.length ? '<div class="minhas">' + blocos.join('') + '</div>' : '<div class="vazio">Não tem tarefas nem papéis em nenhum evento.</div>');
+}
+
+// =====================================================================
+// Vista: como funciona
+// =====================================================================
+function vistaComo() {
+  var caixa = esc(D.caixa);
+  return '<div class="cab-lista"><div><h1>Como funciona</h1><div class="sub">Não há formulários nem regras para decorar.</div></div></div>' +
+    '<div class="passos">' +
+    '<div class="cartao passo"><div class="n">1</div><h3>Escreva como sempre</h3><p>Combine o evento por email com os colegas, por palavras suas. Ponha <b>' + caixa + '</b> em cópia.</p></div>' +
+    '<div class="cartao passo"><div class="n">2</div><h3>A app percebe</h3><p>A cada 10 minutos, as mensagens novas são lidas por IA: identifica o evento, quem é responsável, as tarefas, prazos, decisões e dúvidas.</p></div>' +
+    '<div class="cartao passo"><div class="n">3</div><h3>Todos veem o mesmo</h3><p>Cada evento tem o seu organograma, as tarefas de cada pessoa e um ponto de situação. Quem fica com uma tarefa recebe um aviso.</p></div>' +
+    '</div>' +
+    '<h2 style="font-size:18px;margin-bottom:12px">Um exemplo</h2><div class="exemplo">' +
+    '<div class="cartao email"><div class="email-cab"><span><b>De:</b> Ana Silva</span><span><b>Para:</b> Rui Costa, Marta Reis · <b>Cc:</b> ' + caixa + '</span><span><b>Assunto:</b> Feira de emprego em março</span></div>' +
+    '<div class="email-corpo">Olá a todos,\n\nEstive a falar com a direção e a feira de emprego vai mesmo avançar, dia 15 de março no ginásio. Eu fico a coordenar.\n\nRui, consegues tratar da reserva do ginásio e das mesas? A Marta podia ficar com a divulgação, cartaz e redes sociais até meados de fevereiro.\n\nFalta saber se há orçamento para o coffee break — alguém sabe com quem falar?\n\nAna</div></div>' +
+    '<div class="cartao seta-ia"><b>✦ O que a app regista</b><ul>' +
+    '<li>Evento novo: <b>Feira de Emprego</b>, 15 de março, ginásio</li>' +
+    '<li>Responsável geral: <b>Ana Silva</b></li>' +
+    '<li>Logística → <b>Rui Costa</b>: reservar ginásio e mesas</li>' +
+    '<li>Comunicação → <b>Marta Reis</b>: cartaz e redes sociais, até 15/02</li>' +
+    '<li>Dúvida em aberto: orçamento do coffee break</li>' +
+    '<li>Rui e Marta recebem um aviso das suas tarefas</li></ul>' +
+    '<p style="margin:14px 0 0;color:var(--ink-2)">Quando o Rui responder "já está reservado", a tarefa fica feita. Se a Marta disser "a divulgação passa para o João", a tarefa muda de mãos.</p></div>' +
+    '</div>' +
+    '<h2 style="font-size:18px;margin:28px 0 10px">Dicas</h2><ul style="color:var(--ink-2);margin:0;padding-left:20px;line-height:1.8">' +
+    '<li>Uma conversa por evento ajuda. Se quiser forçar o evento, comece o assunto por <b>[EVENTO] Nome do evento</b>.</li>' +
+    '<li>Se a app se enganar, corrija aqui mesmo: marque a tarefa como feita ou escolha outro responsável. Ou responda ao email a explicar.</li>' +
+    '<li>Às segundas de manhã cada pessoa recebe a lista das suas tarefas pendentes.</li></ul>';
+}
+
+// =====================================================================
+// Arranque
+// =====================================================================
+window.addEventListener('DOMContentLoaded', function () {
+  servidor('api_dados').then(function (j) {
+    D = JSON.parse(j);
+    document.getElementById('nomeApp').textContent = D.nomeApp;
+    desenharSync();
+    desenhar();
+  }).catch(function (e) {
+    document.getElementById('app').innerHTML = '<div class="carregar">Não foi possível carregar: ' + esc(e.message || e) + '</div>';
+  });
+});
+</script>
+<script>
+// =====================================================================
+// Dados de demonstração (só usados fora do Google Apps Script)
+// =====================================================================
+var Demo = (function () {
+  function d(dias, h) { var x = new Date(); x.setDate(x.getDate() + dias); if (h != null) x.setHours(h, 0, 0, 0); return x; }
+  function iso(dias) { var x = d(dias); return x.getFullYear() + '-' + pad(x.getMonth() + 1) + '-' + pad(x.getDate()); }
+  function ts(dias, h) { return d(dias, h).toISOString(); }
+  var P = {
+    ana: { nome: 'Ana Silva', email: 'ana.silva@eclisboa.net' },
+    rui: { nome: 'Rui Costa', email: 'rui.costa@eclisboa.net' },
+    marta: { nome: 'Marta Reis', email: 'marta.reis@eclisboa.net' },
+    joao: { nome: 'João Pinto', email: 'joao.pinto@eclisboa.net' },
+    carla: { nome: 'Carla Matos', email: 'carla.matos@eclisboa.net' },
+    pedro: { nome: 'Pedro Alves', email: 'pedro.alves@eclisboa.net' },
+    ines: { nome: 'Inês Duarte', email: 'ines.duarte@eclisboa.net' },
+    dir: { nome: 'Direção', email: 'direcao@eclisboa.net' }
+  };
+  function t(id, desc, resp, prazo, area, estado) {
+    return { id: id, descricao: desc, responsavel: resp, prazo: prazo, area: area, estado: estado || 'pendente' };
+  }
+  var eventos = [
+    {
+      id: 'feira-de-emprego-2027', nome: 'Feira de Emprego 2027', data: iso(118), hora: '09:30', local: 'Ginásio e Auditório',
+      descricao: 'Feira com empresas parceiras para os alunos finalistas dos cursos profissionais.',
+      estado: 'confirmado', atualizadoEm: ts(0, 9),
+      pontoSituacao: 'A feira está confirmada para março no ginásio, com a Ana a coordenar. O espaço já está reservado e 12 empresas aceitaram o convite. Falta fechar o orçamento do coffee break e lançar a divulgação junto dos alunos.',
+      alertas: ['O cartaz tem prazo esta semana e ainda não houve notícias da Marta.'],
+      coordenador: P.ana,
+      areas: [
+        { nome: 'Logística', responsavel: P.rui, membros: [P.joao] },
+        { nome: 'Comunicação', responsavel: P.marta, membros: [P.ines] },
+        { nome: 'Empresas', responsavel: P.carla, membros: [] }
+      ],
+      pessoas: [P.ana, P.rui, P.marta, P.joao, P.carla, P.ines, P.dir],
+      tarefas: [
+        t(1, 'Reservar o ginásio e o auditório', P.rui, iso(-10), 'Logística', 'concluida'),
+        t(2, 'Convidar as empresas parceiras', P.carla, iso(-3), 'Empresas', 'concluida'),
+        t(3, 'Cartaz e publicações para as redes sociais', P.marta, iso(2), 'Comunicação'),
+        t(4, 'Pedir 30 mesas e extensões elétricas à manutenção', P.joao, iso(30), 'Logística'),
+        t(5, 'Confirmar presença e necessidades de cada empresa', P.carla, iso(45), 'Empresas'),
+        t(6, 'Inscrições dos alunos nas sessões de entrevistas', P.ines, iso(60), 'Comunicação'),
+        t(7, 'Pedir orçamento do coffee break', null, iso(-1), null)
+      ],
+      decisoes: [
+        { texto: 'A feira realiza-se no ginásio, com as apresentações no auditório.', data: ts(-20), de: P.ana },
+        { texto: 'Cada empresa tem direito a uma mesa e duas cadeiras.', data: ts(-12), de: P.rui }
+      ],
+      questoes: [{ texto: 'Há orçamento da escola para o coffee break?', quem: P.dir }],
+      historico: [
+        { data: ts(-21, 10), de: P.ana, resumo: 'A Ana lançou a feira, assumiu a coordenação e distribuiu as primeiras tarefas.', excerto: 'Olá a todos, estive a falar com a direção e a feira de emprego vai mesmo avançar…' },
+        { data: ts(-20, 15), de: P.rui, resumo: 'O Rui ficou com a logística e trouxe o João para ajudar.', excerto: 'Eu trato do espaço. O João pode ajudar com as mesas.' },
+        { data: ts(-12, 11), de: P.rui, resumo: 'Ginásio e auditório reservados; definiu-se uma mesa por empresa.', excerto: 'Já está reservado. Proponho uma mesa e duas cadeiras por empresa.' },
+        { data: ts(-3, 9), de: P.carla, resumo: 'A Carla confirmou 12 empresas e fica a acompanhar as presenças.', excerto: 'Já enviei os convites e 12 empresas aceitaram! Eu vou acompanhando.' },
+        { data: ts(0, 9), de: P.ines, resumo: 'A Inês ofereceu-se para tratar das inscrições dos alunos.', excerto: 'Posso ajudar a Marta, fico com as inscrições dos alunos nas entrevistas.' }
+      ]
+    },
+    {
+      id: 'festa-de-natal', nome: 'Festa de Natal', data: iso(32), hora: '15:00', local: 'Refeitório',
+      descricao: 'Lanche e atuações dos alunos para a comunidade escolar.', estado: 'planeamento', atualizadoEm: ts(-1, 16),
+      pontoSituacao: 'Em planeamento. O Pedro coordena e já há turmas inscritas para atuar. Falta decidir quem trata do som e da decoração.',
+      alertas: [], coordenador: P.pedro,
+      areas: [{ nome: 'Atuações', responsavel: P.ines, membros: [] }, { nome: 'Lanche', responsavel: P.ana, membros: [P.joao] }],
+      pessoas: [P.pedro, P.ines, P.ana, P.joao, P.rui],
+      tarefas: [
+        t(1, 'Recolher inscrições das turmas para atuar', P.ines, iso(12), 'Atuações'),
+        t(2, 'Lista de compras para o lanche', P.ana, iso(20), 'Lanche'),
+        t(3, 'Sistema de som e microfones', null, iso(25), null),
+        t(4, 'Decoração do refeitório', null, null, null)
+      ],
+      decisoes: [{ texto: 'A festa é no último dia de aulas, às 15h.', data: ts(-5), de: P.pedro }],
+      questoes: [{ texto: 'Quem trata do som?', quem: null }, { texto: 'Os pais podem assistir?', quem: P.pedro }],
+      historico: [
+        { data: ts(-6, 9), de: P.pedro, resumo: 'O Pedro propôs a festa e ficou a coordenar.', excerto: 'Este ano podíamos fazer a festa no refeitório…' },
+        { data: ts(-1, 16), de: P.ines, resumo: 'A Inês fica com as atuações dos alunos.', excerto: 'Eu falo com os diretores de turma para as atuações.' }
+      ]
+    },
+    {
+      id: 'visita-de-estudo-ao-porto', nome: 'Visita de estudo ao Porto', data: null, hora: null, local: '',
+      descricao: '', estado: 'planeamento', atualizadoEm: ts(-4, 11),
+      pontoSituacao: 'Ideia em discussão entre o Rui e a Carla. Ainda não há data nem responsável definido.',
+      alertas: ['Ninguém assumiu a coordenação.'], coordenador: null, areas: [],
+      pessoas: [P.rui, P.carla],
+      tarefas: [t(1, 'Pedir orçamentos a duas empresas de autocarros', P.rui, null, null)],
+      decisoes: [], questoes: [{ texto: 'Em que período do ano letivo?', quem: null }],
+      historico: [{ data: ts(-4, 11), de: P.carla, resumo: 'A Carla sugeriu a visita e o Rui vai pedir orçamentos de transporte.', excerto: 'E se levássemos o 11.º ano ao Porto?' }]
+    }
+  ];
+  eventos.forEach(function (e) { e.historico.forEach(function (h, i) { h.id = 'h' + i; }); });
+  var dados = { eu: P.ana.email, admin: true, caixa: 'eventos@eclisboa.net', nomeApp: 'Eventos ECL', ultimaSync: ts(0, new Date().getHours()), eventos: eventos };
+  return {
+    api_dados: function () { return JSON.stringify(dados); },
+    api_sincronizar: function () { dados.ultimaSync = new Date().toISOString(); return JSON.stringify(dados); },
+    api_tarefa: function (evId, tId, alt) {
+      var ev = eventos.filter(function (e) { return e.id === evId; })[0];
+      var tt = ev.tarefas.filter(function (x) { return x.id === tId; })[0];
+      if (alt.estado) tt.estado = alt.estado;
+      if (alt.responsavel !== undefined) tt.responsavel = alt.responsavel;
+      ev.historico.push({ id: 'app' + Date.now(), data: new Date().toISOString(), de: P.ana, app: true, resumo: 'Na app: atualizou a tarefa #' + tId + ' (' + tt.descricao + ').', excerto: '' });
+      return JSON.stringify(ev);
+    },
+    api_perguntar: function (evId, q) {
+      return 'Isto é uma demonstração. Na versão instalada, a IA responde com base nas mensagens e no registo do evento. Por exemplo: "A comunicação está com a Marta Reis, que tem o cartaz para entregar esta semana; a Inês Duarte ajuda com as inscrições dos alunos."';
+    }
+  };
+})();
+</script>
+</body>
+</html>
